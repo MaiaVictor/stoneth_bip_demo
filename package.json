@@ -1,18 +1,20 @@
 {
-  "name": "reacthelloworld",
+  "name": "reactapptemplate",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/server.js",
   "scripts": {
-    "preinstall": "npm install -g reactify",
-    "bundle": "browserify -t reactify -d src/index.js > app/index.min.js",
+    "preinstall": "npm install -g reactify; npm install -g browserify",
+    "build": "browserify -t reactify -d src/client.js > app/index.min.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Victor Maia",
+  "author": "",
   "license": "MIT",
   "dependencies": {
+    "express": "^4.14.0",
     "react": "^15.3.1",
     "react-dom": "^15.3.2",
-    "reactify": "^1.1.1"
+    "reactify": "^1.1.1",
+    "xhr": "^2.2.2"
   }
 }
