@@ -11,10 +11,12 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "bluebird": "^3.5.0",
     "express": "^4.14.0",
     "react": "^15.3.1",
     "react-dom": "^15.3.2",
     "reactify": "^1.1.1",
+    "servify": "^0.1.11",
     "xhr": "^2.2.2"
   }
 }

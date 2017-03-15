@@ -2,4 +2,91 @@
   box-sizing: border-box;
   margin: 0px;
   padding: 0px;
+  font-family: helvetica;
+}
+
+button {
+  padding: 4px;
+}
+
+.bipUser {
+  border: 1px solid #D0D0D0;
+  border-radius: 2px;
+  background-color: #F2F2F2;
+  width: 400px;
+  margin: 12px;
+}
+
+.bipUserTop {
+  border-bottom: 1px dashed #909090;
+  text-align: center;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-around;
+}
+
+.bipUserTopLeft {
+  width: 50%;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  padding-left: 4px;
+}
+
+.bipUserTopRight {
+  width: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.bipUserTabs {
+  width: 100%;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-around;
+}
+
+.bipUserTab {
+  width: 100%;
+  font-family: monospace;
+  padding: 6px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.bipUserTab:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+}
+
+.bipUserTransactionsTable {
+  width: 100%;
+}
+
+.bipUserTransactionsTableHead {
+  font-weight: bold;
+}
+
+.bipUserTransactionRed { color: #824600; }
+.bipUserTransactionGreen { color: #008246; }
+.bipUserTransactionYellow { color: #7a7977; }
+
+.bipUserBalance {
+  padding-top: 8px;
+  padding-left: 4px;
+  padding-bottom: 2px;
+}
+
+.bipUserSend {
+  padding: 6px;
+}
+
+.bipCompaniesTableHead {
+  font-weight: bold;
+}
+
+.bipCompaniesTable td {
+  padding: 4px;
 }
