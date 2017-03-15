@@ -6,6 +6,7 @@
   "scripts": {
     "preinstall": "npm install -g reactify; npm install -g browserify",
     "build": "browserify -t reactify -d src/client.js > app/index.min.js",
+    "minify": "java -jar ~/bin/closure.jar --compilation_level SIMPLE app/index.min.js > app/index.min.js_; mv app/index.min.js_ app/index.min.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -17,7 +18,7 @@
     "react-dom": "^15.3.2",
     "reactify": "^1.1.1",
     "servify": "^0.1.11",
-    "shared-state-machine": "^0.1.2",
+    "shared-state-machine": "^0.1.4",
     "xhr": "^2.2.2"
   }
 }

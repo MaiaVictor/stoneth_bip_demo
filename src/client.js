@@ -4,7 +4,7 @@ const ssm = require("shared-state-machine");
 const app = require("./bipApp.js");
 const Q = require("bluebird");
 
-const formatBrl = amount => "R$" + amount.toFixed(2);
+const formatBrl = amount => "R$" + (amount||0).toFixed(2);
 const formatLoc = loc => loc[0] + " ("+loc[1]+")";
 const isRelevantTo = companyName => tx =>
   tx.type === "send" && (tx.from[1] === companyName || tx.to[1] === companyName);

@@ -60,7 +60,7 @@ module.exports = {
       break;
 
       case "send":
-      if (state.users[tx.from[0]].balances[tx.from[1]] >= tx.value) {
+      if (state.users[tx.from[0]].balances[tx.from[1]] >= tx.value && tx.value !== 0) {
         state.companies[tx.from[1]].pendings.push(state.logs.length);
         state.logs.push({
           type: "send",
