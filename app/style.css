@@ -13,7 +13,7 @@ button {
   border: 1px solid #D0D0D0;
   border-radius: 2px;
   background-color: #F2F2F2;
-  width: 400px;
+  width: 460px;
   margin: 12px;
 }
 
@@ -89,4 +89,23 @@ button {
 
 .bipCompaniesTable td {
   padding: 4px;
+}
+
+.bipCompaniesTable {
+  width: 100%;
+}
+
+.bipCompanyTop {
+  display: flex;
+  justify-content: space-around;
+  border-bottom: 1px dashed #909090;
+  margin-bottom: 2px;
+}
+
+.bipCompanyTopAreaTitle {
+  font-weight: bold;
+}
+
+.bipCompanyTopArea {
+  margin-bottom: 2px;
 }

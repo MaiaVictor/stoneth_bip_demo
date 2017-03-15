@@ -6,7 +6,20 @@ const Q = require("bluebird");
 
 const formatBrl = amount => "R$" + amount.toFixed(2);
 const formatLoc = loc => loc[0] + " ("+loc[1]+")";
-
+const isRelevantTo = companyName => tx =>
+  tx.type === "send" && (tx.from[1] === companyName || tx.to[1] === companyName);
+const companyBalance = companyName => app =>
+  app.companies[companyName].balance;
+const companyVolume = companyName => app =>
+  app.logs
+    .filter(isRelevantTo(companyName))
+    .map(tx => tx.value)
+    .reduce((a, b) => a + b, 0);
+const companyTransactionCount = companyName => app =>
+  app.logs
+    .filter(isRelevantTo(companyName))
+    .map(tx => 1)
+    .reduce((a, b) => a + b, 0);
 const Selector = React.createClass({
   select: function(e) {
     this.props.onSelect(e.target.value);
@@ -29,6 +42,54 @@ const Input = React.createClass({
     return <input type="text" onChange={this.change}/>;
   }
 });
+
+const TransactionsTable = props =>
+  <div className="bipUserTransactions">
+    <table className="bipUserTransactionsTable">
+      <thead className="bipUserTransactionsTableHead">
+        <tr>
+          <td>Tipo</td>
+          <td>Valor</td>
+          {props.userName
+            ? <td>Conta</td>
+            : [<td key={0}>De</td>,
+               <td key={1}>Para</td>]}
+        </tr>
+      </thead>
+      <tbody>{
+        props.txs.map((tx, i) => {
+          switch (tx.type) {
+            case "fund": 
+              if (!props.userName) {
+                return null;
+              } else {
+                return <tr key={i} className="bipUserTransactionGreen">
+                  <td>Depósito</td>
+                  <td>{formatBrl(tx.value)}</td>
+                  <td>-</td>
+                </tr>;
+              };
+            case "send": 
+              if ((!props.userName || tx.to[0] === props.userName) && tx.to[1] === props.companyName) {
+                return <tr key={i} className={"bipUserTransaction" + (tx.status !== "confirmed" ? "Yellow" : "Green")}>
+                  <td>Crédito</td>
+                  <td>{formatBrl(tx.value)}</td>
+                  <td>{formatLoc(tx.from)}</td>
+                  {!props.userName ? <td>{formatLoc(tx.to).replace(/ (.*)/,"")}</td> : null}
+                </tr>;
+              } else {
+                return <tr key={i} className={"bipUserTransaction" + (tx.status !== "confirmed" ? "Yellow" : "Red")}>
+                  <td>Débito</td>
+                  <td>{formatBrl(tx.value)}</td>
+                  {!props.userName ? <td>{formatLoc(tx.from).replace(/ (.*)/,"")}</td> : null}
+                  <td>{formatLoc(tx.to)}</td>
+                </tr>;
+              };
+          }
+        })
+      }</tbody>
+    </table>
+  </div>;
 
 const UserWidget = React.createClass({
   getInitialState: function() {
@@ -64,40 +125,51 @@ const UserWidget = React.createClass({
     });
   },
   render: function() {
+    const tab = this.state.tab;
+    const companyName = this.state.companyName;
+    const userName = this.props.userName;
+    const app = this.props.app;
+    const isRelevant = tx => 
+      tx.from && (tx.from[0] === userName && tx.from[1] === companyName) || 
+      tx.to   && (tx.to  [0] === userName && tx.to  [1] === companyName);
     return <div className="bipUser">
       <div className="bipUserTop">
         <div className="bipUserTopLeft">
-          {this.props.userName}
+          {userName}
           {" "}
-          <Selector options={Object.keys(this.props.app.companies)} onSelect={this.selectCompany}/>
+          <Selector options={Object.keys(app.companies)} onSelect={this.selectCompany}/>
         </div>
         <div className="bipUserTopRight">
           <div className="bipUserTabs">
             <div className="bipUserTab" onClick={this.selectTab("extrato")}>
-              {this.state.tab === "extrato" ? <strong>Extrato</strong> : <span>Extrato</span>}
+              {tab === "extrato" ? <strong>Extrato</strong> : <span>Extrato</span>}
             </div>
             <div className="bipUserTab" onClick={this.selectTab("enviar")}>
-              {this.state.tab === "enviar" ? <strong>Enviar</strong> : <span>Enviar</span>}
+              {tab === "enviar" ? <strong>Enviar</strong> : <span>Enviar</span>}
             </div>
           </div>
         </div>
       </div>
-      <div>{this.state.tab === "extrato" ? this.renderLogs() : this.renderSend()}</div>
-      {!this.props.app ? null : <p className="bipUserBalance">
+      <div>{tab === "extrato" 
+        ? <TransactionsTable txs={app.logs.filter(isRelevant)} userName={userName} companyName={companyName} />
+        : this.renderSend()}
+      </div>
+      {!app ? null : <p className="bipUserBalance">
         <strong>Saldo: </strong>
-        {formatBrl(this.props.app.users[this.props.userName].balances[this.state.companyName])}
+        {formatBrl(app.users[userName].balances[companyName])}
       </p>}
     </div>;
   },
   renderSend: function() {
+    const app = this.props.app;
     return <div className="bipUserSend">
       <table>
         <tbody>
           <tr>
             <td>Destino:</td>
             <td>
-              <Selector options={Object.keys(this.props.app.users)} onSelect={this.selectSendUser}/>
-              <Selector options={Object.keys(this.props.app.companies)} onSelect={this.selectSendCompany}/>
+              <Selector options={Object.keys(app.users)} onSelect={this.selectSendUser}/>
+              <Selector options={Object.keys(app.companies)} onSelect={this.selectSendCompany}/>
             </td>
           </tr>
           <tr>
@@ -117,74 +189,31 @@ const UserWidget = React.createClass({
         </tbody>
       </table>
     </div>;
-  },
-  renderLogs: function() {
-    const isRelevant = tx => 
-      tx.from && (tx.from[0] === this.props.userName && tx.from[1] === this.state.companyName) || 
-      tx.to   && (tx.to  [0] === this.props.userName && tx.to  [1] === this.state.companyName);
-    return <div className="bipUserTransactions">
-      <table className="bipUserTransactionsTable">
-        <thead className="bipUserTransactionsTableHead">
-          <tr>
-            <td>Tipo</td>
-            <td>Valor</td>
-            <td>Dest.</td>
-          </tr>
-        </thead>
-        <tbody>{
-          this.props.app.logs.filter(isRelevant).map((tx, i) => {
-            switch (tx.type) {
-              case "fund": return <tr key={i}  className="bipUserTransactionGreen">
-                <td>Crédito</td>
-                <td>{formatBrl(tx.value)}</td>
-                <td>-</td>
-              </tr>;
-              case "send": 
-                return tx.to[0] === this.props.userName && tx.to[1] === this.state.companyName
-                  ? <tr key={i} className={"bipUserTransaction" + (tx.status !== "confirmed" ? "Yellow" : "Green")}>
-                    <td>Recebimento</td>
-                    <td>{formatBrl(tx.value)}</td>
-                    <td>{formatLoc(tx.from)}</td>
-                  </tr>
-                  : <tr key={i} className={"bipUserTransaction" + (tx.status !== "confirmed" ? "Yellow" : "Red")}>
-                    <td>Pagamento</td>
-                    <td>{formatBrl(tx.value)}</td>
-                    <td>{formatLoc(tx.to)}</td>
-                  </tr>;
-            }})
-        }</tbody>
-      </table>
-    </div>;
   }
 });
 
-const CompaniesWidget = React.createClass({
+const CompanyWidget = React.createClass({
   render: function() {
-    const isRelevantTo = companyName => tx => tx.type === "send"
-      && (tx.from[1] === companyName || tx.to[1] === companyName);
-
-    const volume = companyName => this.props.app.logs
-      .filter(isRelevantTo(companyName))
-      .map(tx => tx.value)
-      .reduce((a, b) => a + b, 0);
-          
+    const isRelevant = tx => 
+      tx.from && tx.from[1] === companyName || 
+      tx.to   && tx.to  [1] === companyName;
+    const app = this.props.app;
+    const companyName = this.props.companyName;
+    const topArea = title => value =>
+      <div className="bipCompanyTopArea">
+        <p className="bipCompanyTopAreaTitle">{title}</p>
+        <p className="bipCompanyTopAreaValue">{value}</p>
+      </div>;
     return <div className="bipUser">
-      <table className="bipCompaniesTable">
-        <thead className="bipCompaniesTableHead">
-          <tr>
-            <td>Empresa</td>
-              <td>Saldo</td>
-            <td>Volume</td>
-          </tr>
-        </thead>
-        <tbody>{Object.keys(this.props.app.companies).map((companyName, i) =>
-          <tr key={i}>
-            <td>{companyName}</td>
-            <td>{formatBrl(this.props.app.companies[companyName].balance)}</td>
-            <td>{formatBrl(volume(companyName))}</td>
-          </tr>)
-        }</tbody>
-      </table>
+      <div className="bipCompanyTop">
+        {topArea("Empresa")(companyName)}
+        {topArea("Saldo")(formatBrl(companyBalance(companyName)(app)))}
+        {topArea("Volume")(formatBrl(companyVolume(companyName)(app)))}
+        {topArea("Transações")(companyTransactionCount(companyName)(app))}
+      </div>
+      <div>
+        <TransactionsTable txs={app.logs.filter(isRelevant)} companyName={companyName}/>
+      </div>
     </div>;
   }
 });
@@ -224,6 +253,23 @@ const AdminWidget = React.createClass({
   },
   render: function() {
     return <div className="bipUser">
+      <table className="bipCompaniesTable">
+        <tbody>
+          <tr>
+            <td><strong>Empresa</strong></td>
+            <td><strong>Saldo</strong></td>
+            <td><strong>Volume</strong></td>
+            <td><strong>Transações</strong></td>
+          </tr>
+          {Object.keys(this.props.app.companies).map((companyName, i) =>
+            <tr key={i}>
+              <td>{companyName}</td>
+              <td>{formatBrl(companyBalance(companyName)(this.props.app))}</td>
+              <td>{formatBrl(companyVolume(companyName)(this.props.app))}</td>
+              <td>{companyTransactionCount(companyName)(this.props.app)}</td>
+            </tr>)}
+        </tbody>
+      </table>
       <table>
         <tbody>
           <tr>
@@ -286,9 +332,11 @@ const main = React.createClass({
   render: function(){
     return <div>
       {!this.state.app ? null : <div>
-        <CompaniesWidget app={this.state.app}/>
         <UserWidget userName="Victor" app={this.state.app} act={this.ssm.act}/>
         <UserWidget userName="Fernanda" app={this.state.app} act={this.ssm.act}/>
+        <CompanyWidget companyName="PayPal" app={this.state.app}/>
+        <CompanyWidget companyName="PagSeguro" app={this.state.app}/>
+        <br/>
         <AdminWidget app={this.state.app} act={this.ssm.act}/>
       </div>}
     </div>
@@ -300,28 +348,3 @@ window.onload = function(){
     React.createElement(main),
     document.getElementById("main"));
 };
-
-
-
-
-
-/*
-_________________________
-|FERNANDA        [PAYPAL]|
-|========================|
-|__EXTRATO___|___enviar__|
-|(transações)            |
-|------------------------|
-| SALDO                  |
-|------------------------|
-
-_________________________
-|FERNANDA        [PAYPAL]|
-|========================|
-|__extrato___|___ENVIAR__|
-| VALOR: [__________]    |
-| EMAIL: [__________]    |
-| EMPRE: [__________]    |
-| [ENVIAR]               |
-|------------------------|
-*/
