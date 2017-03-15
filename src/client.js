@@ -140,7 +140,7 @@ const UserWidget = React.createClass({
                 <td>-</td>
               </tr>;
               case "send": 
-                return tx.from[0] !== this.props.userName
+                return tx.to[0] === this.props.userName && tx.to[1] === this.state.companyName
                   ? <tr key={i} className={"bipUserTransaction" + (tx.status !== "confirmed" ? "Yellow" : "Green")}>
                     <td>Recebimento</td>
                     <td>{formatBrl(tx.value)}</td>
