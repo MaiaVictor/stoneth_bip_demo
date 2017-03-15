@@ -1,6 +1,6 @@
 const React = require("react");
 const ReactDOM = require("react-dom");
-const ssm = require("./../../../../shared-state-machine");
+const ssm = require("shared-state-machine");
 const app = require("./bipApp.js");
 const Q = require("bluebird");
 
@@ -278,7 +278,7 @@ const main = React.createClass({
   },
   componentDidMount: function(){ 
     this.ssm = null;
-    ssm.play(app, "http://localhost:7171").then(ssm => {
+    ssm.play(app, window.location.origin.replace("7990","7991")).then(ssm => {
       this.ssm = ssm;
       ssm.get(state => this.setState({app: state}));
     });
