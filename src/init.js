@@ -12,7 +12,8 @@ ssm.play(app, "http://localhost:7171").then(ssm => {
     {type: "fund_company", name: "PagSeguro", value: 500},
     {type: "fund_user", name: "Fernanda", company: "Paypal", value: 1000},
     {type: "fund_user", name: "Victor", company: "PagSeguro", value: 1000},
-    //{type: "send", from: ["Victor", "PagSeguro"], to: ["Fernanda", "Paypal"], value: 100},
+    //{type: "send", from: ["Victor", "PagSeguro"], to: ["Fernanda", "Paypal"], value: 1000},
+    //{type: "fund_company", name: "PagSeguro", value: 500},
     //{type: "send", from: ["Victor", "PagSeguro"], to: ["Fernanda", "Paypal"], value: 500},
     //{type: "clear"}
   ].reduce((a, b) => a.then(() => ssm.act(b)), Q.resolve(null));

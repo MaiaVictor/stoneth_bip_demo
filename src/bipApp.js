@@ -12,10 +12,12 @@ module.exports = {
         const company = state.companies[companyName];
         while (state.logs[company.pendings[0]]) {
           const tx = state.logs[company.pendings[0]];
-          if (tx.value <= company.balance) {
+          if (tx.value <= company.debtFreeBalance) {
             company.pendings.shift();
             state.users[tx.to[0]].balances[tx.to[1]] += tx.value;
             state.companies[tx.to[1]].balance += tx.value;
+            state.companies[tx.to[1]].debtFreeBalance += tx.value;
+            state.companies[tx.from[1]].debtFreeBalance -= tx.value;
             tx.status = "confirmed";
           } else break;
         };
@@ -38,6 +40,7 @@ module.exports = {
       state.companies[tx.name] = {
         name: tx.name,
         balance: 0,
+        debtFreeBalance: 0,
         pendings: []
       }
       for (let userName in state.users)
@@ -46,6 +49,7 @@ module.exports = {
 
       case "fund_company":
       state.companies[tx.name].balance += tx.value;
+      state.companies[tx.name].debtFreeBalance += tx.value;
       break;
 
       case "fund_user":
